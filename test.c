@@ -3,18 +3,29 @@
 #include <linux/init.h>
 #include <linux/slab.h>
 #include <linux/string.h>
+#include <linux/gfp.h>
+#include <linux/highmem.h>
+
 static int __init test_init(void)
 {
-
+  printk(KERN_INFO "hoge: Hello\n");
   const char* str = "48206105";
-  char* dest = (char*)kmalloc(256, GFP_KERNEL);
-  if(dest == NULL){printk(KERN_INFO "hoge: No memory"); return 0;}
+  struct page* my_page = alloc_page(GFP_HIGHUSER);
+  if(my_page == NULL){
+    printk(KERN_INFO "hoge: No memory\n");
+    return -1;
+  }
+  
+  char* dest = (char*)kmap(my_page);
+  
   strcpy(dest,str);
   
   printk(KERN_INFO "%s\n",dest);
-  kfree(dest);
-  return 0;
+
+  kunmap(my_page);
+  __free_page(my_page);
   
+  return 0;
 }
 
 static void __exit test_exit(void)
